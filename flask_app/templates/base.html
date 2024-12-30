@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strong Password Generation System</title>
+    <style>
+        /* 基本样式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #eef2f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #004085;
+            margin-bottom: 25px;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .section {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 25px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #004085;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+            color: #333;
+        }
+
+        button[type="submit"] {
+            background-color: #004085;
+            color: #fff;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #003366;
+        }
+
+        /* 全页面加载动画的遮罩 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s;
+        }
+
+        /* 加载动画显示时的样式 */
+        .loading-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 转圈动画样式 */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 转圈动画的关键帧 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .column {
+            flex: 1;
+            min-width: 480px;
+            box-sizing: border-box;
+        }
+
+        .colum-box {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #ffffff;
+            padding: 20px;
+            box-sizing: border-box;
+            min-height: 150px;
+            margin-top: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #004085;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            color: #555;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        p {
+            margin: 0;
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .password-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .password-summary, .discriminator-score {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f7f9fb;
+            color: #333;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+        }
+
+        .model-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #004085;
+            margin: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .suggested-password {
+            font-size: 15px;
+            font-weight: bold;
+            color: #0056b3;
+            background-color: #f0f8ff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+    </style>
+    <script>
+        async function submitForm(event) {
+            event.preventDefault(); // 阻止表单的默认提交
+
+            // 显示加载动画并禁用按钮
+            document.querySelector(".loading-overlay").classList.add("active");
+            const submitButton = document.querySelector("button[type='submit']");
+            submitButton.disabled = true;
+
+            const formData = new FormData(document.getElementById("password-form"));
+            const response = await fetch("/generate-passwords", {
+                method: "POST",
+                body: formData
+            });
+
+            // 处理响应数据
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById("frame1-content").innerHTML = data.frame1Content;
+                document.getElementById("frame1-monsimilarity-result").innerHTML = data.frame1MonScore;
+                document.getElementById("frame1-generated-pwd").innerHTML = data.frame1PassGAN;
+                document.getElementById("frame1-similarity-result").innerHTML = data.frame1Score;
+                document.getElementById("suggested1-password").innerHTML = data.frame1Suggested;
+                document.getElementById("strength-password").innerHTML = data.frame1SuggestedScore;
+                // document.getElementById("frame1-discriminator-res").innerHTML = data.frame1Discriminator;
+                
+            } else {
+                console.error("Error:", response.statusText);
+            }
+
+            // 隐藏加载动画并启用按钮
+            document.querySelector(".loading-overlay").classList.remove("active");
+            submitButton.disabled = false;
+        }
+    </script>
+</head>
+<body>
+    <!-- 全页面加载动画 -->
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <h1>Strong Password Generation System</h1>
+        
+        <!-- Form Section -->
+        <div class="section">
+            <form id="password-form" method="POST" onsubmit="submitForm(event)">
+                <!-- Input field: Number of passwords -->
+                <div class="form-group">
+                    <label for="num_pass">Number of Passwords:</label>
+                    <input type="text" id="num_pass" name="num_pass" value="16">
+                </div>
+        
+                <!-- Input field: Prompt sentence -->
+                <div class="form-group">
+                    <label for="input_password">Input Password:</label>
+                    <input type="text" id="input_password" name="input_password" required>
+                </div>
+        
+                <!-- Submit button -->
+                <button type="submit">
+                    Generate
+                    <span class="loading-spinner" style="display: none;">Loading...</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Results Section with LSTM and CNN Models -->
+        <div class="row">
+            <div class="column">
+                <div class="row">
+                    <div class="colum-box" id="frame1-content">
+                        <h3>PassMon Generated Passwords:</h3>
+                    </div>
+
+                    
+                    <div class="colum-box discriminator-score" id="frame1-monsimilarity-result">
+                        <h3>PassMon Discriminator && Cosine Similarity Results:</h3>
+                    </div>
+
+
+                    <div class="colum-box discriminator-score" id="frame1-generated-pwd">
+                        <h3>PassGAN Generated Passwords:</h3>
+                    </div>
+
+                    <!-- <div class="colum-box discriminator-score" id="frame1-discriminator-res">
+                        <h3>PassGAN Discriminator Results:</h3>
+                    </div> -->
+
+                    <div class="colum-box discriminator-score" id="frame1-similarity-result">
+                        <h3>PassGAN Discriminator && Cosine Similarity Results:</h3>
+                    </div>
+
+                    
+
+                    <div class="colum-box">
+                        <h3 style="color: green;">Suggested Password:</h3>
+                        <p style="color: red;" class="suggested-password"  id="suggested1-password"></p>
+                    </div>
+
+                    <div class="colum-box">
+                        <h3 style="color: green;">Strength of Suggested Password:</h3>
+                        <p style="color: green;" class="strength-password"  id="strength-password"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
