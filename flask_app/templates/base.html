@@ -197,15 +197,40 @@
         }
     </style>
     <script>
+
+        function generateRandomPassword(length = 12) {
+            const characters = "0123456789!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+            let password = "";
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                password += characters[randomIndex];
+            }
+            return password;
+        }
+
         async function submitForm(event) {
-            event.preventDefault(); // 阻止表单的默认提交
+            event.preventDefault(); // 阻止表单的默认提交行为
+
+            // 获取表单输入值
+            const inputPasswordField = document.getElementById("input_password");
+            const numPassField = document.getElementById("num_pass");
+
+            // 如果密码为空，则生成一个 12 位随机密码并填入
+            if (inputPasswordField.value.trim() === "") {
+                const randomPassword = generateRandomPassword(12);
+                inputPasswordField.value = randomPassword; // 将随机密码反填到输入框
+                alert(`密码为空，已自动生成随机密码：${randomPassword}`);
+            }
 
             // 显示加载动画并禁用按钮
             document.querySelector(".loading-overlay").classList.add("active");
             const submitButton = document.querySelector("button[type='submit']");
             submitButton.disabled = true;
 
+            // 准备表单数据
             const formData = new FormData(document.getElementById("password-form"));
+
+            // 发送请求到后端
             const response = await fetch("/generate-passwords", {
                 method: "POST",
                 body: formData
@@ -215,15 +240,13 @@
             if (response.ok) {
                 const data = await response.json();
                 document.getElementById("frame1-content").innerHTML = data.frame1Content;
-                document.getElementById("frame1-monsimilarity-result").innerHTML = data.frame1MonScore;
                 document.getElementById("frame1-generated-pwd").innerHTML = data.frame1PassGAN;
                 document.getElementById("frame1-similarity-result").innerHTML = data.frame1Score;
                 document.getElementById("suggested1-password").innerHTML = data.frame1Suggested;
                 document.getElementById("strength-password").innerHTML = data.frame1SuggestedScore;
-                // document.getElementById("frame1-discriminator-res").innerHTML = data.frame1Discriminator;
-                
             } else {
-                console.error("Error:", response.statusText);
+                console.error("请求出错:", response.statusText);
+                alert("生成密码失败，请重试！");
             }
 
             // 隐藏加载动画并启用按钮
@@ -253,7 +276,7 @@
                 <!-- Input field: Prompt sentence -->
                 <div class="form-group">
                     <label for="input_password">Input Password:</label>
-                    <input type="text" id="input_password" name="input_password" required>
+                    <input type="text" id="input_password" name="input_password" >
                 </div>
         
                 <!-- Submit button -->
@@ -271,32 +294,17 @@
                     <div class="colum-box" id="frame1-content">
                         <h3>PassMon Generated Passwords:</h3>
                     </div>
-
-                    
-                    <div class="colum-box discriminator-score" id="frame1-monsimilarity-result">
-                        <h3>PassMon Discriminator && Cosine Similarity Results:</h3>
-                    </div>
-
-
                     <div class="colum-box discriminator-score" id="frame1-generated-pwd">
                         <h3>PassGAN Generated Passwords:</h3>
                     </div>
 
-                    <!-- <div class="colum-box discriminator-score" id="frame1-discriminator-res">
-                        <h3>PassGAN Discriminator Results:</h3>
-                    </div> -->
-
                     <div class="colum-box discriminator-score" id="frame1-similarity-result">
                         <h3>PassGAN Discriminator && Cosine Similarity Results:</h3>
                     </div>
-
-                    
-
                     <div class="colum-box">
                         <h3 style="color: green;">Suggested Password:</h3>
                         <p style="color: red;" class="suggested-password"  id="suggested1-password"></p>
                     </div>
-
                     <div class="colum-box">
                         <h3 style="color: green;">Strength of Suggested Password:</h3>
                         <p style="color: green;" class="strength-password"  id="strength-password"></p>
