@@ -7,12 +7,12 @@
 unzip PassGAN/hashpwd/hashed_gen_passwords.txt.zip -d PassGAN/hashpwd/
 unzip PassGAN/data/train.txt.zip -d PassGAN/data/
 
-cd /Users/xiakejie/PassMon/PassMon/PassGAN
+cd /Users/path/to//PassGAN
 
 source ./passganenv/bin/activate
 
 source ~/.bashrc
 
-cd /Users/xiakejie/PassMon/PassMon/flask_app
+cd /Users/path/to/flask_app
 
  python ./app.py
