@@ -47,38 +47,33 @@ def get_best_password():
     best_score = -1
     min_similarity = float('inf')  # 相似度最低值初始化为正无穷大
 
-    # 遍历 global_dict 中的所有密码
-    for idx, pwd in enumerate(g.global_dict.keys()):
-        # 防止索引越界
-        if idx < len(g.old_pwds):
-            old_pwd = g.old_pwds[idx]  # 获取对应旧密码
+    # 遍历 global_dict 中的所有密码及其相似度
+    for pwd, similarity in g.global_dict.items():  # 直接从 g.global_dict 获取相似度
+        print(f"Password: {pwd}, Similarity: {similarity}")
 
-            # 计算与旧密码的相似度
-            similarity = cosine_similarity(pwd, old_pwd)
-            print(f"Similarity between {pwd} and {old_pwd}: {similarity}")
+        # 计算密码强度评分
+        score = zxcvbn.zxcvbn(pwd)['score']
+        print(f"Password: {pwd}, Score: {score}")
 
-            # 计算密码强度评分
-            score = zxcvbn.zxcvbn(pwd)['score']
-
-            # 筛选逻辑：
-            # 1. 优先选择相似度最低的密码
-            # 2. 若相似度相同，则选择评分最高的密码
-            if similarity < min_similarity or (similarity == min_similarity and score > best_score):
+        # 筛选逻辑：
+        # 1. 优先选择相似度最低的密码
+        # 2. 若相似度相同，则选择评分最高的密码
+        if similarity < min_similarity or (similarity == min_similarity and score > best_score):
+            best_password = pwd
+            best_score = score
+            min_similarity = similarity  # 更新最小相似度
+        elif similarity == min_similarity and score == best_score:
+            # 强度和相似度都一致时随机选择
+            if random.choice([True, False]):
                 best_password = pwd
-                best_score = score
-                min_similarity = similarity  # 更新最小相似度
-            elif similarity == min_similarity and score == best_score:
-                # 强度和相似度都一致时随机选择
-                if random.choice([True, False]):
-                    best_password = pwd
 
     # 输出最终筛选结果
         
     g.suggested_pwd = best_password + f"({100*min_similarity:.0f}%)"
     g.suggested_pwd_score = ['very_weak', 'weak', 'fair', 'strong', 'very_strong'][best_score]
                                      
-    print(f"Best password: {best_password}, Score: {best_score}, Similarity: {min_similarity}")
-    return ""  # 返回最优密码
+    print(f"Best password: {best_password}, Score: {best_score}, Similarity: {min_similarity:.2f}")
+    return f"{best_password}({min_similarity:.2f})"  # 返回格式化后的最优密码
 
 def cosine_similarity(password1, password2):
     
@@ -180,7 +175,7 @@ def generate_passgan_score_summary(file_path='./PassganScore.txt',ignore_check=F
                     if 0.0 <= passgan_score < 1.5:
                         summary['passgan_score_counts']['Fake'] += 1
                         summary['passgan_score_passwords']['Fake'].append((password, passgan_score))
-                        set_global_value(password,passgan_score)
+                        
  
                         
                     elif 1.5 <= passgan_score < 3.0:
@@ -209,6 +204,7 @@ def generate_passgan_score_summary(file_path='./PassganScore.txt',ignore_check=F
                             similarity = cosine_similarity(pwd, old_pwd)
                             if similarity <= min_similarity and score_key == 'Fake':
                                  min_similarity = similarity
+                                 set_global_value(pwd,similarity)
                                  print(pwd+"#######111######"+str(similarity))
                                 #  g.suggested_pwd = pwd  + f"({100*similarity:.0f}%)"
                                  
